@@ -36,6 +36,12 @@ jobs:
       - name: Build Electron app
         run: pnpm run build-only
         
+      - name: List build output files
+        shell: pwsh
+        run: |
+          Write-Host "Listing files in the release directory:"
+          Get-ChildItem -Path ./release -Recurse | Select-Object FullName
+        
       - name: Get version from package.json
         id: package_version
         shell: pwsh
@@ -48,8 +54,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./release/Pegasus*.exe
-            ./release/latest*.yml
+            ./release/Pegasus-Setup-*.exe
+            ./release/win-unpacked/*.exe
+            ./release/*.yml
+            ./release/*.yaml
           name: Release v${{ steps.package_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
