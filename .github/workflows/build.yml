@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     
     permissions:
-      contents: write  # This is important for creating releases
+      contents: write
 
     steps:
       - name: Check out Git repository
@@ -35,13 +35,30 @@ jobs:
 
       - name: Build Electron app
         run: pnpm run build-only
-        
-      - name: List build output files
+
+      - name: Debug directory structure
         shell: pwsh
         run: |
-          Write-Host "Listing files in the release directory:"
-          Get-ChildItem -Path ./release -Recurse | Select-Object FullName
-        
+          Write-Host "Current directory: $PWD"
+          Write-Host "Listing all directories in current location:"
+          Get-ChildItem -Path . -Directory | ForEach-Object { Write-Host $_.FullName }
+          
+          Write-Host "Checking for 'release' directory:"
+          $releaseExists = Test-Path -Path ./release
+          Write-Host "Release directory exists: $releaseExists"
+          
+          if ($releaseExists) {
+            Write-Host "Contents of release directory:"
+            Get-ChildItem -Path ./release -Recurse | Select-Object FullName
+          }
+          
+          Write-Host "Checking for 'dist' directory:"
+          $distExists = Test-Path -Path ./dist
+          Write-Host "Dist directory exists: $distExists"
+          
+          Write-Host "Checking for other possible output locations:"
+          Get-ChildItem -Path . -Recurse -Include *.exe | Select-Object FullName
+      
       - name: Get version from package.json
         id: package_version
         shell: pwsh
@@ -49,15 +66,14 @@ jobs:
           $packageJson = Get-Content -Path package.json | ConvertFrom-Json
           $version = $packageJson.version
           echo "version=$version" >> $env:GITHUB_OUTPUT
-        
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./release/Pegasus-Setup-*.exe
-            ./release/win-unpacked/*.exe
-            ./release/*.yml
-            ./release/*.yaml
+            ./**/*.exe
+            ./**/*.yml
+            ./**/*.yaml
           name: Release v${{ steps.package_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
