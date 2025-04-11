@@ -30,5 +30,18 @@
       "target": ["nsis"],
       "artifactName": "${productName}-Setup-${version}.${ext}"
     }
+  },
+  "devDependencies": {
+    "@types/electron": "^1.6.12",
+    "@types/node": "^22.14.0",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "^8.0.0",
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   }
 }
