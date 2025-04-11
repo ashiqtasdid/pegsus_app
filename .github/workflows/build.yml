@@ -47,7 +47,31 @@ jobs:
       - name: Compile TypeScript
         run: pnpm exec tsc
 
-      - name: Build and Publish
+      - name: Build Electron app
+        run: pnpm run build
+        
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        shell: bash
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run publish
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          
+      - name: Upload Setup Exe
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/Pegasus Setup ${{ steps.get_version.outputs.VERSION }}.exe
+          asset_name: Pegasus-Setup-${{ steps.get_version.outputs.VERSION }}.exe
+          asset_content_type: application/octet-stream
