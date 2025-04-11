@@ -40,24 +40,11 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Current directory: $PWD"
-          Write-Host "Listing all directories in current location:"
-          Get-ChildItem -Path . -Directory | ForEach-Object { Write-Host $_.FullName }
-          
-          Write-Host "Checking for 'release' directory:"
-          $releaseExists = Test-Path -Path ./release
-          Write-Host "Release directory exists: $releaseExists"
-          
-          if ($releaseExists) {
-            Write-Host "Contents of release directory:"
-            Get-ChildItem -Path ./release -Recurse | Select-Object FullName
+          Write-Host "Checking for setup file:"
+          $setupFiles = Get-ChildItem -Path . -Recurse -Include "*Setup*.exe" | Select-Object FullName
+          foreach ($file in $setupFiles) {
+            Write-Host "Setup file found: $($file.FullName)"
           }
-          
-          Write-Host "Checking for 'dist' directory:"
-          $distExists = Test-Path -Path ./dist
-          Write-Host "Dist directory exists: $distExists"
-          
-          Write-Host "Checking for other possible output locations:"
-          Get-ChildItem -Path . -Recurse -Include *.exe | Select-Object FullName
       
       - name: Get version from package.json
         id: package_version
@@ -71,9 +58,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./**/*.exe
-            ./**/*.yml
-            ./**/*.yaml
+            ./**/*Setup*.exe
           name: Release v${{ steps.package_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
