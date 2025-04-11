@@ -4,12 +4,17 @@
   "description": "The official Pegasus app",
   "main": "dist/main.js",
   "scripts": {
-    "build": "electron-builder --win",
-    "publish": "electron-builder --win --publish always"
+    "start": "tsc && electron .",
+    "build": "tsc && electron-builder --win",
+    "publish": "tsc && electron-builder --win --publish always"
   },
   "build": {
     "appId": "com.pegasus.pegasus",
     "productName": "Pegasus",
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
     "publish": {
       "provider": "github",
       "owner": "ashiqtasdid",

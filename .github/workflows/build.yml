@@ -19,7 +19,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18  # Updated from 16 to 18 to meet PNPM requirements
+          node-version: 18
 
       - name: Install PNPM
         uses: pnpm/action-setup@v2
@@ -44,10 +44,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build Electron app
-        run: pnpm run build
+      - name: Compile TypeScript
+        run: pnpm exec tsc
 
-      - name: Publish
+      - name: Build and Publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm run publish
