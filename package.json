@@ -1,0 +1,35 @@
+{
+  "name": "pegasus",
+  "version": "1.0.1",
+  "description": "The official Pegasus app",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "electron-builder --win",
+    "publish": "electron-builder --win --publish always"
+  },
+  "build": {
+    "appId": "com.pegasus.pegasus",
+    "productName": "Pegasus",
+    "publish": {
+      "provider": "github",
+      "owner": "ashiqtasdid",
+      "repo": "pegsus_app",
+      "private": false
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.8.0",
+  "devDependencies": {
+    "@types/electron": "^1.6.12",
+    "@types/node": "^22.14.0",
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  }
+}
