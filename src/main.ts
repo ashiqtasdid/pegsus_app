@@ -42,8 +42,8 @@ function setupAutoUpdater() {
     private: false
   }, null, 2));
   
-  // Disable auto downloading
-  autoUpdater.autoDownload = false;
+  // Enable auto downloading
+  autoUpdater.autoDownload = true;
   
   // Check for updates
   autoUpdater.on("checking-for-update", () => {
@@ -53,18 +53,7 @@ function setupAutoUpdater() {
   // Update available
   autoUpdater.on("update-available", (info) => {
     console.log("Update available:", info);
-    dialog
-      .showMessageBox({
-        type: "info",
-        title: "Update Available",
-        message: `Version ${info.version} is available. Would you like to download it now?`,
-        buttons: ["Yes", "No"],
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          autoUpdater.downloadUpdate();
-        }
-      });
+    // No dialog shown - updates will download automatically
   });
 
   // No updates available
@@ -88,18 +77,21 @@ function setupAutoUpdater() {
       mainWindow.setProgressBar(-1);
     }
     
-    dialog
-      .showMessageBox({
+    // Notify user briefly before installing
+    if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
         type: "info",
-        title: "Update Ready",
-        message: "Update downloaded. The application will restart to install the update.",
-        buttons: ["Restart Now", "Later"],
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          autoUpdater.quitAndInstall(false, true);
-        }
+        title: "Installing Update",
+        message: "A new version has been downloaded. The application will restart to install the update.",
+        buttons: ["OK"]
+      }).then(() => {
+        // Install immediately after user clicks OK
+        autoUpdater.quitAndInstall(false, true);
       });
+    } else {
+      // If no window is available, install immediately
+      autoUpdater.quitAndInstall(false, true);
+    }
   });
 
   // Error handling
@@ -112,16 +104,6 @@ function setupAutoUpdater() {
     
     if (err.message) {
       console.error("Error message:", err.message);
-    }
-    
-    if (mainWindow) {
-      dialog.showMessageBox(mainWindow, {
-        type: "error",
-        title: "Update Error",
-        message: "An error occurred while checking for updates.",
-        detail: err.message || "Unknown error",
-        buttons: ["OK"]
-      });
     }
   });
 
@@ -139,24 +121,6 @@ function setupAutoUpdater() {
 
 // Setup IPC handlers for window controls
 function setupWindowControls() {
-  ipcMain.on('window-minimize', () => {
-    if (mainWindow) mainWindow.minimize();
-  });
-
-  ipcMain.on('window-maximize', () => {
-    if (mainWindow) {
-      if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow.maximize();
-      }
-    }
-  });
-
-  ipcMain.on('window-close', () => {
-    if (mainWindow) mainWindow.close();
-  });
-  
   ipcMain.on('check-for-updates', () => {
     console.log("Manual update check triggered");
     autoUpdater.checkForUpdates().catch(err => {
@@ -174,116 +138,17 @@ function createWindow() {
       nodeIntegration: false,
       preload: path.join(__dirname, "preload.js"),
     },
-    // Better appearance options
-    titleBarStyle: "hidden",
-    frame: false, // Frameless window for modern look
+    // Use native window frame instead of frameless window
+    frame: true,
     backgroundColor: "#ffffff", // Prevent white flash on load
     show: false, // Don't show until ready
     icon: path.join(__dirname, "../assets/icon.png"), // Add your app icon
   });
 
-  // Remove the menu bar
-  mainWindow.setMenu(null);
-
   // Load the website
   mainWindow.loadURL(
     "https://pegasus-panel-git-resize-ashiqtasdids-projects.vercel.app"
   );
-
-  // Inject window controls when the page is loaded with delayed execution and verification
-  mainWindow.webContents.on('did-finish-load', () => {
-    // Add a short delay to ensure DOM is fully ready
-    setTimeout(() => {
-      mainWindow?.webContents.executeJavaScript(`
-        // Check if title bar already exists
-        if (!document.getElementById('electron-title-bar')) {
-          console.log('Injecting custom title bar...');
-          
-          // Create title bar with higher z-index
-          const titleBar = document.createElement('div');
-          titleBar.id = 'electron-title-bar';
-          titleBar.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; height: 30px; background-color: #1a1a1a; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: drag; z-index: 99999999;';
-
-          // Create window control buttons container
-          const controls = document.createElement('div');
-          controls.style.cssText = 'display: flex; -webkit-app-region: no-drag;';
-
-          // Minimize button
-          const minimizeBtn = document.createElement('button');
-          minimizeBtn.innerHTML = '&#9472;'; // Horizontal line symbol
-          minimizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-          minimizeBtn.onclick = () => {
-            console.log('Minimize clicked');
-            if (window.electronAPI && window.electronAPI.minimizeWindow) {
-              window.electronAPI.minimizeWindow();
-            } else {
-              console.error('electronAPI.minimizeWindow not available');
-            }
-          };
-          minimizeBtn.onmouseover = () => minimizeBtn.style.backgroundColor = '#333333';
-          minimizeBtn.onmouseout = () => minimizeBtn.style.backgroundColor = 'transparent';
-
-          // Maximize button
-          const maximizeBtn = document.createElement('button');
-          maximizeBtn.innerHTML = '&#9723;'; // Square symbol
-          maximizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-          maximizeBtn.onclick = () => {
-            console.log('Maximize clicked');
-            if (window.electronAPI && window.electronAPI.maximizeWindow) {
-              window.electronAPI.maximizeWindow();
-            } else {
-              console.error('electronAPI.maximizeWindow not available');
-            }
-          };
-          maximizeBtn.onmouseover = () => maximizeBtn.style.backgroundColor = '#333333';
-          maximizeBtn.onmouseout = () => maximizeBtn.style.backgroundColor = 'transparent';
-
-          // Close button
-          const closeBtn = document.createElement('button');
-          closeBtn.innerHTML = '&#10006;'; // X symbol
-          closeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-          closeBtn.onclick = () => {
-            console.log('Close clicked');
-            if (window.electronAPI && window.electronAPI.closeWindow) {
-              window.electronAPI.closeWindow();
-            } else {
-              console.error('electronAPI.closeWindow not available');
-            }
-          };
-          closeBtn.onmouseover = () => closeBtn.style.backgroundColor = '#E81123';
-          closeBtn.onmouseout = () => closeBtn.style.backgroundColor = 'transparent';
-
-          // Add buttons to controls
-          controls.appendChild(minimizeBtn);
-          controls.appendChild(maximizeBtn);
-          controls.appendChild(closeBtn);
-
-          // Add controls to title bar
-          titleBar.appendChild(controls);
-
-          // Add title bar to body
-          document.body.prepend(titleBar);
-
-          // Adjust the body to account for the title bar
-          const bodyStyle = document.body.style;
-          bodyStyle.marginTop = '30px';
-          
-          console.log('Title bar injection complete');
-          
-          // Check if the API is available
-          if (window.electronAPI) {
-            console.log('electronAPI is available');
-          } else {
-            console.error('electronAPI is not available - preload script may not be working correctly');
-          }
-        } else {
-          console.log('Title bar already exists, skipping injection');
-        }
-      `).catch(err => {
-        console.error('Failed to inject title bar:', err);
-      });
-    }, 1000); // 1 second delay
-  });
 
   // Open external links in default browser instead of new Electron window
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
