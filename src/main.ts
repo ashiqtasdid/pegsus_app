@@ -190,57 +190,99 @@ function createWindow() {
     "https://pegasus-panel-git-resize-ashiqtasdids-projects.vercel.app"
   );
 
-  // Inject window controls when the page is loaded
+  // Inject window controls when the page is loaded with delayed execution and verification
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow?.webContents.executeJavaScript(`
-      // Create title bar
-      const titleBar = document.createElement('div');
-      titleBar.id = 'electron-title-bar';
-      titleBar.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; height: 30px; background-color: #1a1a1a; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: drag; z-index: 9999;';
+    // Add a short delay to ensure DOM is fully ready
+    setTimeout(() => {
+      mainWindow?.webContents.executeJavaScript(`
+        // Check if title bar already exists
+        if (!document.getElementById('electron-title-bar')) {
+          console.log('Injecting custom title bar...');
+          
+          // Create title bar with higher z-index
+          const titleBar = document.createElement('div');
+          titleBar.id = 'electron-title-bar';
+          titleBar.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; height: 30px; background-color: #1a1a1a; display: flex; justify-content: flex-end; align-items: center; -webkit-app-region: drag; z-index: 99999999;';
 
-      // Create window control buttons container
-      const controls = document.createElement('div');
-      controls.style.cssText = 'display: flex; -webkit-app-region: no-drag;';
+          // Create window control buttons container
+          const controls = document.createElement('div');
+          controls.style.cssText = 'display: flex; -webkit-app-region: no-drag;';
 
-      // Minimize button
-      const minimizeBtn = document.createElement('button');
-      minimizeBtn.innerHTML = '&#9472;'; // Horizontal line symbol
-      minimizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-      minimizeBtn.onclick = () => window.electronAPI.minimizeWindow();
-      minimizeBtn.onmouseover = () => minimizeBtn.style.backgroundColor = '#333333';
-      minimizeBtn.onmouseout = () => minimizeBtn.style.backgroundColor = 'transparent';
+          // Minimize button
+          const minimizeBtn = document.createElement('button');
+          minimizeBtn.innerHTML = '&#9472;'; // Horizontal line symbol
+          minimizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
+          minimizeBtn.onclick = () => {
+            console.log('Minimize clicked');
+            if (window.electronAPI && window.electronAPI.minimizeWindow) {
+              window.electronAPI.minimizeWindow();
+            } else {
+              console.error('electronAPI.minimizeWindow not available');
+            }
+          };
+          minimizeBtn.onmouseover = () => minimizeBtn.style.backgroundColor = '#333333';
+          minimizeBtn.onmouseout = () => minimizeBtn.style.backgroundColor = 'transparent';
 
-      // Maximize button
-      const maximizeBtn = document.createElement('button');
-      maximizeBtn.innerHTML = '&#9723;'; // Square symbol
-      maximizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-      maximizeBtn.onclick = () => window.electronAPI.maximizeWindow();
-      maximizeBtn.onmouseover = () => maximizeBtn.style.backgroundColor = '#333333';
-      maximizeBtn.onmouseout = () => maximizeBtn.style.backgroundColor = 'transparent';
+          // Maximize button
+          const maximizeBtn = document.createElement('button');
+          maximizeBtn.innerHTML = '&#9723;'; // Square symbol
+          maximizeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
+          maximizeBtn.onclick = () => {
+            console.log('Maximize clicked');
+            if (window.electronAPI && window.electronAPI.maximizeWindow) {
+              window.electronAPI.maximizeWindow();
+            } else {
+              console.error('electronAPI.maximizeWindow not available');
+            }
+          };
+          maximizeBtn.onmouseover = () => maximizeBtn.style.backgroundColor = '#333333';
+          maximizeBtn.onmouseout = () => maximizeBtn.style.backgroundColor = 'transparent';
 
-      // Close button
-      const closeBtn = document.createElement('button');
-      closeBtn.innerHTML = '&#10006;'; // X symbol
-      closeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
-      closeBtn.onclick = () => window.electronAPI.closeWindow();
-      closeBtn.onmouseover = () => closeBtn.style.backgroundColor = '#E81123';
-      closeBtn.onmouseout = () => closeBtn.style.backgroundColor = 'transparent';
+          // Close button
+          const closeBtn = document.createElement('button');
+          closeBtn.innerHTML = '&#10006;'; // X symbol
+          closeBtn.style.cssText = 'width: 46px; height: 30px; border: none; background: transparent; color: white; font-size: 14px; cursor: pointer;';
+          closeBtn.onclick = () => {
+            console.log('Close clicked');
+            if (window.electronAPI && window.electronAPI.closeWindow) {
+              window.electronAPI.closeWindow();
+            } else {
+              console.error('electronAPI.closeWindow not available');
+            }
+          };
+          closeBtn.onmouseover = () => closeBtn.style.backgroundColor = '#E81123';
+          closeBtn.onmouseout = () => closeBtn.style.backgroundColor = 'transparent';
 
-      // Add buttons to controls
-      controls.appendChild(minimizeBtn);
-      controls.appendChild(maximizeBtn);
-      controls.appendChild(closeBtn);
+          // Add buttons to controls
+          controls.appendChild(minimizeBtn);
+          controls.appendChild(maximizeBtn);
+          controls.appendChild(closeBtn);
 
-      // Add controls to title bar
-      titleBar.appendChild(controls);
+          // Add controls to title bar
+          titleBar.appendChild(controls);
 
-      // Add title bar to body
-      document.body.prepend(titleBar);
+          // Add title bar to body
+          document.body.prepend(titleBar);
 
-      // Adjust the body to account for the title bar
-      const bodyStyle = document.body.style;
-      bodyStyle.marginTop = '30px';
-    `);
+          // Adjust the body to account for the title bar
+          const bodyStyle = document.body.style;
+          bodyStyle.marginTop = '30px';
+          
+          console.log('Title bar injection complete');
+          
+          // Check if the API is available
+          if (window.electronAPI) {
+            console.log('electronAPI is available');
+          } else {
+            console.error('electronAPI is not available - preload script may not be working correctly');
+          }
+        } else {
+          console.log('Title bar already exists, skipping injection');
+        }
+      `).catch(err => {
+        console.error('Failed to inject title bar:', err);
+      });
+    }, 1000); // 1 second delay
   });
 
   // Open external links in default browser instead of new Electron window
