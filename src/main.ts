@@ -14,6 +14,34 @@ function setupAutoUpdater() {
   (autoUpdater.logger as any).transports.file.level = "debug";
   console.log('Auto updater setup with log file at:', (autoUpdater.logger as any).transports.file.getFile());
   
+  // Print debug information
+  console.log('Current version:', app.getVersion());
+  console.log('Update channel:', autoUpdater.channel || 'latest');
+  console.log('Electron version:', process.versions.electron);
+  console.log('Is development mode:', isDevelopment);
+  
+  // Check if GH_TOKEN is available
+  if (!process.env.GH_TOKEN && !isDevelopment) {
+    console.log('No GH_TOKEN found in environment variables');
+  }
+  
+  // Explicitly set the feed URL and configuration
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'ashiqtasdid',
+    repo: 'pegsus_app',
+    private: false,
+    releaseType: 'release'
+  });
+  
+  // Log the feed URL
+  console.log('Auto-updater configuration:', JSON.stringify({
+    provider: 'github',
+    owner: 'ashiqtasdid',
+    repo: 'pegsus_app',
+    private: false
+  }, null, 2));
+  
   // Disable auto downloading
   autoUpdater.autoDownload = false;
   
@@ -107,6 +135,25 @@ function setupAutoUpdater() {
       console.error("Scheduled update check failed:", err);
     });
   }, 30 * 60 * 1000);
+}
+
+// Add manual update option
+function addManualUpdateOption() {
+  if (!mainWindow) return;
+  
+  const latestVersion = "1.1.3"; // Update this to your latest version
+  const downloadUrl = `https://github.com/ashiqtasdid/pegsus_app/releases/download/v${latestVersion}/Pegasus-Setup-${latestVersion}.exe`;
+  
+  mainWindow.webContents.executeJavaScript(`
+    // Create manual update button
+    const manualUpdateBtn = document.createElement('button');
+    manualUpdateBtn.textContent = 'Download Latest Version';
+    manualUpdateBtn.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9998; padding: 8px 12px; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer;';
+    manualUpdateBtn.onclick = () => {
+      window.open('${downloadUrl}', '_blank');
+    };
+    document.body.appendChild(manualUpdateBtn);
+  `);
 }
 
 // Setup IPC handlers for window controls
@@ -266,6 +313,7 @@ app.whenReady().then(() => {
   createWindow();
   setupAutoUpdater();
   setupWindowControls();
+  setTimeout(addManualUpdateOption, 3000); // Add manual update option after a delay
 });
 
 app.on("window-all-closed", () => {
