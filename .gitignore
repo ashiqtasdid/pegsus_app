@@ -3,3 +3,4 @@ release/
 dist/
 node_modules/
 *.exe
+.env

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsc && electron .",
     "build": "tsc && electron-builder --win",
-    "publish": "tsc && electron-builder --win --publish always"
+    "publish": "dotenv -- cross-env-shell \"electron-builder --win --publish always\""
   },
   "build": {
     "appId": "com.pegasus.pegasus",
@@ -29,6 +29,8 @@
   "devDependencies": {
     "@types/electron": "^1.6.12",
     "@types/node": "^22.14.0",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "^8.0.0",
     "electron": "^35.1.5",
     "electron-builder": "^26.0.12",
     "ts-node": "^10.9.2",
