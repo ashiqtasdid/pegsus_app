@@ -38,7 +38,11 @@ jobs:
         
       - name: Get version from package.json
         id: package_version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        shell: pwsh
+        run: |
+          $packageJson = Get-Content -Path package.json | ConvertFrom-Json
+          $version = $packageJson.version
+          echo "version=$version" >> $env:GITHUB_OUTPUT
         
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -46,6 +50,6 @@ jobs:
           files: |
             ./release/Pegasus*.exe
             ./release/latest*.yml
-          name: Release v${{ steps.package_version.outputs.current-version }}
+          name: Release v${{ steps.package_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
