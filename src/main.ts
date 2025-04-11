@@ -137,25 +137,6 @@ function setupAutoUpdater() {
   }, 30 * 60 * 1000);
 }
 
-// Add manual update option
-function addManualUpdateOption() {
-  if (!mainWindow) return;
-  
-  const latestVersion = "1.1.3"; // Update this to your latest version
-  const downloadUrl = `https://github.com/ashiqtasdid/pegsus_app/releases/download/v${latestVersion}/Pegasus-Setup-${latestVersion}.exe`;
-  
-  mainWindow.webContents.executeJavaScript(`
-    // Create manual update button
-    const manualUpdateBtn = document.createElement('button');
-    manualUpdateBtn.textContent = 'Download Latest Version';
-    manualUpdateBtn.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9998; padding: 8px 12px; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer;';
-    manualUpdateBtn.onclick = () => {
-      window.open('${downloadUrl}', '_blank');
-    };
-    document.body.appendChild(manualUpdateBtn);
-  `);
-}
-
 // Setup IPC handlers for window controls
 function setupWindowControls() {
   ipcMain.on('window-minimize', () => {
@@ -256,34 +237,9 @@ function createWindow() {
       // Add title bar to body
       document.body.prepend(titleBar);
 
-      // Create update check button
-      const updateBtn = document.createElement('button');
-      updateBtn.textContent = 'Check for Updates';
-      updateBtn.style.cssText = 'position: fixed; top: 40px; right: 20px; z-index: 9998; padding: 8px 12px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer;';
-      updateBtn.onclick = () => {
-        updateBtn.textContent = 'Checking...';
-        updateBtn.disabled = true;
-        window.electronAPI.checkForUpdates();
-        setTimeout(() => {
-          updateBtn.textContent = 'Check for Updates';
-          updateBtn.disabled = false;
-        }, 3000);
-      };
-      document.body.appendChild(updateBtn);
-
       // Adjust the body to account for the title bar
       const bodyStyle = document.body.style;
       bodyStyle.marginTop = '30px';
-      
-      // Fix for any fixed position elements that need to account for the title bar
-      const fixedElements = document.querySelectorAll('*[style*="position: fixed"][style*="top: 0"]');
-      fixedElements.forEach(el => {
-        const element = el as HTMLElement;
-        if (element.id !== 'electron-title-bar') {
-          const currentTop = parseInt(element.style.top || '0', 10);
-          element.style.top = (currentTop + 30) + 'px';
-        }
-      });
     `);
   });
 
@@ -305,15 +261,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Set up protocol handler for custom links
-  protocol.registerStringProtocol('electron', (request, callback) => {
-    callback('');
-  });
-  
   createWindow();
   setupAutoUpdater();
   setupWindowControls();
-  setTimeout(addManualUpdateOption, 3000); // Add manual update option after a delay
 });
 
 app.on("window-all-closed", () => {
