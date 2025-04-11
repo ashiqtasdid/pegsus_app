@@ -145,6 +145,8 @@ function createWindow() {
     icon: path.join(__dirname, "../assets/icon.png"), // Add your app icon
   });
 
+  mainWindow.setMenu(null);
+
   // Load the website
   mainWindow.loadURL(
     "https://pegasus-panel-git-resize-ashiqtasdids-projects.vercel.app"
