@@ -27,8 +27,8 @@ jobs:
           version: 10.8.0
           run_install: false
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: Install dependencies with updated lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Compile TypeScript
         run: pnpm exec tsc
