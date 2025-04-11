@@ -1,15 +1,22 @@
-import { app, BrowserWindow, shell, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, shell, dialog, ipcMain, protocol } from "electron";
 import { autoUpdater } from "electron-updater";
 import * as path from "path";
+import * as log from "electron-log";
 
 // Keep a global reference of the window object to prevent it from being garbage collected
 let mainWindow: BrowserWindow | null = null;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 // Configure auto updater
 function setupAutoUpdater() {
+  // Configure logger
+  autoUpdater.logger = log;
+  (autoUpdater.logger as any).transports.file.level = "debug";
+  console.log('Auto updater setup with log file at:', (autoUpdater.logger as any).transports.file.getFile());
+  
   // Disable auto downloading
   autoUpdater.autoDownload = false;
-
+  
   // Check for updates
   autoUpdater.on("checking-for-update", () => {
     console.log("Checking for updates...");
@@ -17,6 +24,7 @@ function setupAutoUpdater() {
 
   // Update available
   autoUpdater.on("update-available", (info) => {
+    console.log("Update available:", info);
     dialog
       .showMessageBox({
         type: "info",
@@ -32,8 +40,8 @@ function setupAutoUpdater() {
   });
 
   // No updates available
-  autoUpdater.on("update-not-available", () => {
-    console.log("No updates available.");
+  autoUpdater.on("update-not-available", (info) => {
+    console.log("No updates available:", info);
   });
 
   // Download progress
@@ -46,13 +54,17 @@ function setupAutoUpdater() {
   });
 
   // Update downloaded
-  autoUpdater.on("update-downloaded", () => {
+  autoUpdater.on("update-downloaded", (info) => {
+    console.log("Update downloaded:", info);
+    if (mainWindow) {
+      mainWindow.setProgressBar(-1);
+    }
+    
     dialog
       .showMessageBox({
         type: "info",
         title: "Update Ready",
-        message:
-          "Update downloaded. The application will restart to install the update.",
+        message: "Update downloaded. The application will restart to install the update.",
         buttons: ["Restart Now", "Later"],
       })
       .then((result) => {
@@ -65,12 +77,35 @@ function setupAutoUpdater() {
   // Error handling
   autoUpdater.on("error", (err) => {
     console.error("Error in auto-updater:", err);
+    
+    if (err.stack) {
+      console.error("Stack trace:", err.stack);
+    }
+    
+    if (err.message) {
+      console.error("Error message:", err.message);
+    }
+    
+    if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: "error",
+        title: "Update Error",
+        message: "An error occurred while checking for updates.",
+        detail: err.message || "Unknown error",
+        buttons: ["OK"]
+      });
+    }
   });
 
   // Check for updates immediately and then every 30 minutes
-  autoUpdater.checkForUpdates();
+  autoUpdater.checkForUpdates().catch(err => {
+    console.error("Initial update check failed:", err);
+  });
+  
   setInterval(() => {
-    autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdates().catch(err => {
+      console.error("Scheduled update check failed:", err);
+    });
   }, 30 * 60 * 1000);
 }
 
@@ -92,6 +127,13 @@ function setupWindowControls() {
 
   ipcMain.on('window-close', () => {
     if (mainWindow) mainWindow.close();
+  });
+  
+  ipcMain.on('check-for-updates', () => {
+    console.log("Manual update check triggered");
+    autoUpdater.checkForUpdates().catch(err => {
+      console.error("Manual update check failed:", err);
+    });
   });
 }
 
@@ -167,6 +209,21 @@ function createWindow() {
       // Add title bar to body
       document.body.prepend(titleBar);
 
+      // Create update check button
+      const updateBtn = document.createElement('button');
+      updateBtn.textContent = 'Check for Updates';
+      updateBtn.style.cssText = 'position: fixed; top: 40px; right: 20px; z-index: 9998; padding: 8px 12px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer;';
+      updateBtn.onclick = () => {
+        updateBtn.textContent = 'Checking...';
+        updateBtn.disabled = true;
+        window.electronAPI.checkForUpdates();
+        setTimeout(() => {
+          updateBtn.textContent = 'Check for Updates';
+          updateBtn.disabled = false;
+        }, 3000);
+      };
+      document.body.appendChild(updateBtn);
+
       // Adjust the body to account for the title bar
       const bodyStyle = document.body.style;
       bodyStyle.marginTop = '30px';
@@ -201,6 +258,11 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Set up protocol handler for custom links
+  protocol.registerStringProtocol('electron', (request, callback) => {
+    callback('');
+  });
+  
   createWindow();
   setupAutoUpdater();
   setupWindowControls();

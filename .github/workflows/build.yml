@@ -40,11 +40,8 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Current directory: $PWD"
-          Write-Host "Checking for setup file:"
-          $setupFiles = Get-ChildItem -Path . -Recurse -Include "*Setup*.exe" | Select-Object FullName
-          foreach ($file in $setupFiles) {
-            Write-Host "Setup file found: $($file.FullName)"
-          }
+          Write-Host "Checking for release files:"
+          Get-ChildItem -Path ./release -Recurse | Select-Object FullName
       
       - name: Get version from package.json
         id: package_version
@@ -58,7 +55,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./**/*Setup*.exe
+            ./release/*.exe
+            ./release/*.yml
+            ./release/*.yaml
+            ./release/*.blockmap
           name: Release v${{ steps.package_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
