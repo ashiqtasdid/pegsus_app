@@ -19,7 +19,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18  # Updated from 16 to 18 to meet PNPM requirements
 
       - name: Install PNPM
         uses: pnpm/action-setup@v2
