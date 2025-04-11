@@ -1,12 +1,13 @@
 {
   "name": "pegasus",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "The official Pegasus app",
   "main": "dist/main.js",
   "scripts": {
     "start": "tsc && electron .",
     "build": "tsc && electron-builder --win",
-    "publish": "dotenv -- cross-env-shell \"electron-builder --win --publish always\""
+    "build-only": "tsc && electron-builder --win --publish never",
+    "publish-local": "dotenv -- cross-env-shell \"electron-builder --win --publish always\""
   },
   "build": {
     "appId": "com.pegasus.pegasus",
@@ -20,6 +21,11 @@
       "owner": "ashiqtasdid",
       "repo": "pegsus_app",
       "private": false
+    },
+    "generateUpdatesFilesForAllChannels": true,
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     }
   },
   "keywords": [],

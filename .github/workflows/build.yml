@@ -6,11 +6,11 @@ on:
       - "v*"
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+  build:
+    runs-on: windows-latest
+    
+    permissions:
+      contents: write  # This is important for creating releases
 
     steps:
       - name: Check out Git repository
@@ -27,20 +27,6 @@ jobs:
           version: 10.8.0
           run_install: false
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install
 
@@ -48,16 +34,18 @@ jobs:
         run: pnpm exec tsc
 
       - name: Build Electron app
-        run: pnpm run build
+        run: pnpm run build-only
+        
+      - name: Get version from package.json
+        id: package_version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
         
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./release/*.exe
-            ./release/*.msi
-            ./release/*.zip
+            ./release/Pegasus*.exe
             ./release/latest*.yml
+          name: Release v${{ steps.package_version.outputs.current-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
